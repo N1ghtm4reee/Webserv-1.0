@@ -1,23 +1,48 @@
-name: Webserv Tests
+name: Webserv CI
 
 on:
   push:
     branches: [ main ]
   pull_request:
+    branches: [ main ]
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Set up Docker
-      uses: docker/setup-buildx-action@v2
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
 
-    - name: Build Docker image
-      run: docker build -t webserv .
+      - name: Build Docker image
+        run: docker build -t webserv .
 
-    - name: Run tests inside container
-      run: docker run --rm webserv
+      - name: Run tests inside container
+        run: docker run --rm webserv
+
+  clang-tidy-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install clang-tidy
+        run: sudo apt-get update && sudo apt-get install -y clang-tidy
+
+      - name: Install bear for compilation database
+        run: sudo apt-get install -y bear
+
+      - name: Generate Compilation Database
+        run: |
+          mkdir -p build
+          cd build
+          bear -- make -j$(nproc)
+
+      - name: Run clang-tidy
+        run: |
+          cd build
+          find ../ -name '*.cpp' | xargs clang-tidy -p .
