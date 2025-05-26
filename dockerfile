@@ -9,6 +9,6 @@ COPY . /home/Webserv
 
 WORKDIR /home/Webserv
 
-RUN chmod +x script.sh
+RUN chmod +x tests.sh
 
-CMD ["./script.sh"]
+CMD ["./tests.sh"]
