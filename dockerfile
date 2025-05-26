@@ -5,7 +5,7 @@ RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
     curl \
-    netcat
+    netcat-openbsd
 
 COPY . /home/Webserv
 WORKDIR /home/Webserv
