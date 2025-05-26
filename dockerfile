@@ -3,10 +3,11 @@ FROM debian:latest
 RUN apt-get update && apt-get install -y \
     make \
     gcc \
-    g++
+    g++ \
+    curl \
+    netcat
 
 COPY . /home/Webserv
-
 WORKDIR /home/Webserv
 
 RUN chmod +x tests.sh
