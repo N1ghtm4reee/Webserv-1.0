@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .upload-container {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .upload-container.dragover {
+            border-color: #007bff;
+            background-color: #f8f9fa;
+        }
+        input[type="file"] {
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 100%;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .progress {
+            width: 100%;
+            height: 20px;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+            display: none;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #007bff;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .file-info {
+            margin: 10px 0;
+            font-size: 14px;
+            color: #666;
+        }
+        .test-buttons {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .test-buttons button {
+            flex: 1;
+            min-width: 120px;
+        }
+    </style>
+</head>
+<body>
+    <h1>File Upload Test</h1>
+    <p>Test your C++ server's POST file upload functionality</p>
+
+    <div class="upload-container" id="uploadContainer">
+        <p>Drag and drop files here or click to select</p>
+        <input type="file" id="fileInput" accept="audio/*,video/*,image/*" multiple>
+        <div class="file-info" id="fileInfo"></div>
+        <div class="progress" id="progressContainer">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <button onclick="uploadFile()" id="uploadBtn">Upload File</button>
+    </div>
+
+    <div class="test-buttons">
+        <button onclick="testLargeFile()">Test Large File (100MB)</button>
+        <button onclick="testInvalidType()">Test Invalid File Type</button>
+        <button onclick="testMultipleFiles()">Test Multiple Files</button>
+    </div>
+
+    <div id="serverUrl" style="margin: 20px 0;">
+        <label>Server URL: </label>
+        <input type="text" id="urlInput" value="http://localhost:8080" style="width: 300px; padding: 5px;">
+    </div>
+
+    <div class="result" id="result" style="display: none;"></div>
+
+    <script>
+        let selectedFiles = [];
+
+        const fileInput = document.getElementById('fileInput');
+        const uploadContainer = document.getElementById('uploadContainer');
+        const result = document.getElementById('result');
+        const fileInfo = document.getElementById('fileInfo');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const uploadBtn = document.getElementById('uploadBtn');
+
+        // Drag and drop functionality
+        uploadContainer.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadContainer.classList.add('dragover');
+        });
+
+        uploadContainer.addEventListener('dragleave', () => {
+            uploadContainer.classList.remove('dragover');
+        });
+
+        uploadContainer.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadContainer.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files);
+            handleFileSelection(files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            handleFileSelection(files);
+        });
+
+        function handleFileSelection(files) {
+            selectedFiles = files;
+            if (files.length > 0) {
+                const fileNames = files.map(f => `${f.name} (${formatFileSize(f.size)})`).join(', ');
+                fileInfo.textContent = `Selected: ${fileNames}`;
+                uploadBtn.disabled = false;
+            } else {
+                fileInfo.textContent = '';
+                uploadBtn.disabled = true;
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        async function uploadFile() {
+            if (selectedFiles.length === 0) {
+                showResult('Please select a file first', 'error');
+                return;
+            }
+
+            const serverUrl = document.getElementById('urlInput').value.trim();
+            if (!serverUrl) {
+                showResult('Please enter a server URL', 'error');
+                return;
+            }
+
+            uploadBtn.disabled = true;
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+
+            try {
+                for (let i = 0; i < selectedFiles.length; i++) {
+                    const file = selectedFiles[i];
+                    await uploadSingleFile(file, serverUrl, i + 1, selectedFiles.length);
+                }
+            } catch (error) {
+                showResult(`Upload failed: ${error.message}`, 'error');
+            } finally {
+                uploadBtn.disabled = false;
+                progressContainer.style.display = 'none';
+            }
+        }
+
+        async function uploadSingleFile(file, serverUrl, index, total) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch(serverUrl, {
+                method: 'POST',
+                body: formData
+            });
+
+            const progressPercent = (index / total) * 100;
+            progressBar.style.width = progressPercent + '%';
+
+            const responseText = await response.text();
+            
+            if (response.ok) {
+                showResult(`File ${index}/${total} uploaded successfully!\n\nResponse: ${responseText}`, 'success');
+            } else {
+                throw new Error(`HTTP ${response.status}: ${responseText}`);
+            }
+        }
+
+        function showResult(message, type) {
+            result.textContent = message;
+            result.className = `result ${type}`;
+            result.style.display = 'block';
+        }
+
+        // Test functions
+        function testLargeFile() {
+            // Create a large blob (simulating large file)
+            const size = 105 * 1024 * 1024; // 105MB - should exceed your 100MB limit
+            const largeBlob = new Blob([new ArrayBuffer(size)], { type: 'audio/mp3' });
+            const largeFile = new File([largeBlob], 'large_test.mp3', { type: 'audio/mp3' });
+            
+            handleFileSelection([largeFile]);
+            showResult('Large file (105MB) created for testing. Click Upload to test size limit.', 'success');
+        }
+
+        function testInvalidType() {
+            // Create a text file (should be rejected)
+            const textBlob = new Blob(['This is a test text file'], { type: 'text/plain' });
+            const textFile = new File([textBlob], 'test.txt', { type: 'text/plain' });
+            
+            handleFileSelection([textFile]);
+            showResult('Invalid file type (text) created for testing. Click Upload to test validation.', 'success');
+        }
+
+        function testMultipleFiles() {
+            // Create multiple test files
+            const mp3Blob = new Blob([new ArrayBuffer(1024)], { type: 'audio/mp3' });
+            const mp4Blob = new Blob([new ArrayBuffer(2048)], { type: 'video/mp4' });
+            const jpgBlob = new Blob([new ArrayBuffer(512)], { type: 'image/jpeg' });
+            
+            const files = [
+                new File([mp3Blob], 'test1.mp3', { type: 'audio/mp3' }),
+                new File([mp4Blob], 'test2.mp4', { type: 'video/mp4' }),
+                new File([jpgBlob], 'test3.jpg', { type: 'image/jpeg' })
+            ];
+            
+            handleFileSelection(files);
+            showResult('Multiple test files created. Click Upload to test multiple file handling.', 'success');
+        }
+
+        // Initialize
+        uploadBtn.disabled = true;
+    </script>
+</body>
+</html>
