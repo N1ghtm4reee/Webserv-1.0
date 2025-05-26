@@ -1,0 +1,23 @@
+name: Webserv Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v2
+
+    - name: Build Docker image
+      run: docker build -t webserv .
+
+    - name: Run tests inside container
+      run: docker run --rm webserv ./test_webserv.sh
