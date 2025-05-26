@@ -1,6 +1,6 @@
 CC = c++
 FLAGS = -Iincludes #-Wall -Wextra -Werror -std=c++98
-SRC = main.cpp utils.cpp Request.cpp EventLoop.cpp Response.cpp
+SRC = main.cpp utils.cpp Request.cpp EventLoop.cpp Response.cpp ConfigParser.cpp
 OBJ = $(SRC:.cpp=.o)
 NAME = Webserv
 
