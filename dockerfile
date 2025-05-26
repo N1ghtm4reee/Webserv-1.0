@@ -10,6 +10,8 @@ RUN apt-get update && apt-get install -y \
 COPY . /home/Webserv
 WORKDIR /home/Webserv
 
+RUN make
+
 RUN chmod +x tests.sh
 
 CMD ["./tests.sh"]
