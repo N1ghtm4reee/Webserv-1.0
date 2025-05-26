@@ -21,7 +21,7 @@ jobs:
         run: docker build -t webserv .
 
       - name: Run tests inside container
-        run: docker run --rm webserv
+        run: docker run --rm webserv test
 
   clang-tidy-check:
     runs-on: ubuntu-latest
