@@ -14,6 +14,8 @@ std::string getResponseLine(int statusCode)
         return "HTTP/1.1 403 Forbidden\r\n";
     case 404:
         return "HTTP/1.1 404 Not Found\r\n";
+    case 405:
+        return "HTTP/1.1 405 Method Not Allowed\r\n";
     case 500:
         return "HTTP/1.1 500 Internal Server Error\r\n";
     default:
@@ -37,6 +39,7 @@ void Response::sendErrorPage(int fd, Request &Req, int statusCode, Server &serve
 {
     int foundPage = 0;
 
+    std::cout << "status code throwd : " << statusCode << std::endl;
     std::map<int, std::string> page = server.getErrorPages();
     if (page.find(statusCode) != page.end())
     {
@@ -495,7 +498,17 @@ void Response::sendResponse(int fd, Request &Req, int statusCode, Server &server
         {
             if (!isAllowedMethod(Req.getMethod(), location.getAllowedMethods()))
                 throw 405;
-    
+            // skip favicon.ico
+            if (Req.getPath() == "/favicon.ico")
+            {
+                std::string response = getResponseLine(200) +
+                                       "Content-Length: 0\r\n"
+                                       "Content-Type: text/plain; charset=UTF-8\r\n"
+                                       "Connection: keep-alive\r\n"
+                                       "\r\n";
+                send(fd, response.c_str(), response.size(), 0);
+                return;
+            }
             if (Req.getMethod() == "POST" && location.getUploadPath().empty())
                 throw 403;
     

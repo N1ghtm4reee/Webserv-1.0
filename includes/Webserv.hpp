@@ -11,6 +11,7 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
+#include <signal.h>
 
 
 // class Webserv {

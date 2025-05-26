@@ -44,6 +44,7 @@ int EventLoop::findServerIndex(std::string host, std::string port, std::vector<S
         {
             if (ports[k] == targetPort)
             {
+                std::cout << "port target : " << ports[k] << std::endl;
                 portMatch = true;
                 break;
             }

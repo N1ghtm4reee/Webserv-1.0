@@ -1,11 +1,12 @@
-FROM debian:latest
+FROM ubuntu:latest
 
 RUN apt-get update && apt-get install -y \
-    make \
-    gcc \
-    g++ \
+    build-essential \
     curl \
-    netcat-openbsd
+    netcat-openbsd \
+    cmake \
+    g++ \
+    make
 
 COPY . /home/Webserv
 WORKDIR /home/Webserv
