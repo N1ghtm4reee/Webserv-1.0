@@ -20,4 +20,4 @@ jobs:
       run: docker build -t webserv .
 
     - name: Run tests inside container
-      run: docker run --rm webserv ./test_webserv.sh
+      run: docker run ./test_webserv.sh
