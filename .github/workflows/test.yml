@@ -37,12 +37,7 @@ jobs:
         run: sudo apt-get install -y bear
 
       - name: Generate Compilation Database
-        run: |
-          mkdir -p build
-          cd build
-          bear -- make -j$(nproc)
+        run: bear -- make -j$(nproc)
 
       - name: Run clang-tidy
-        run: |
-          cd build
-          find ../ -name '*.cpp' | xargs clang-tidy -p .
+        run: find ../ -name '*.cpp' | xargs clang-tidy -p .
